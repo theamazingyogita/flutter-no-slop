@@ -1,0 +1,54 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate JSON manifests
+        run: |
+          python3 -c "
+          import json, sys
+          for f in ['.claude-plugin/plugin.json', '.claude-plugin/marketplace.json']:
+              json.load(open(f))
+              print(f'{f}: valid')
+          "
+
+  skills:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate SKILL.md frontmatter
+        run: |
+          python3 - << 'PY'
+          import os, sys, re
+          fail = False
+          for entry in sorted(os.listdir('skills')):
+              path = os.path.join('skills', entry, 'SKILL.md')
+              if not os.path.isfile(path):
+                  print(f'FAIL {entry}: no SKILL.md'); fail = True; continue
+              text = open(path).read()
+              m = re.match(r'^---\n(.*?)\n---\n', text, re.S)
+              if not m:
+                  print(f'FAIL {entry}: missing YAML frontmatter'); fail = True; continue
+              fm = m.group(1)
+              name = re.search(r'^name:\s*(\S+)', fm, re.M)
+              desc = re.search(r'^description:\s*(.+)', fm, re.M)
+              if not name:
+                  print(f'FAIL {entry}: no name field'); fail = True; continue
+              if name.group(1) != entry:
+                  print(f'FAIL {entry}: name "{name.group(1)}" does not match directory'); fail = True
+              if not desc:
+                  print(f'FAIL {entry}: no description field'); fail = True
+              lines = len(text.splitlines())
+              if lines > 500:
+                  print(f'FAIL {entry}: {lines} lines, over the 500 limit'); fail = True
+              else:
+                  print(f'OK   {entry}: {lines} lines')
+          sys.exit(1 if fail else 0)
+          PY

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "flutter-no-slop",
+  "version": "0.1.0",
+  "description": "Human-quality Flutter and Dart code: verified APIs instead of guessed ones, one class per file, small widget files, plain developer naming, clean Bloc wiring, and tests for every feature.",
+  "author": {
+    "name": "Yogita Agarwal",
+    "url": "https://github.com/theamazingyogita"
+  },
+  "homepage": "https://github.com/theamazingyogita/flutter-no-slop",
+  "repository": "https://github.com/theamazingyogita/flutter-no-slop",
+  "license": "MIT",
+  "keywords": [
+    "flutter",
+    "dart",
+    "bloc",
+    "code-quality",
+    "agent-skills"
+  ],
+  "skills": "./skills"
+}

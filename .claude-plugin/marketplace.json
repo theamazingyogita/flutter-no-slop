@@ -1,0 +1,24 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
+  "name": "theamazingyogita",
+  "description": "Flutter and Dart agent plugins by Yogita Agarwal.",
+  "owner": {
+    "name": "Yogita Agarwal",
+    "url": "https://github.com/theamazingyogita"
+  },
+  "plugins": [
+    {
+      "name": "flutter-no-slop",
+      "source": "./",
+      "displayName": "Flutter No Slop",
+      "description": "Human-quality Flutter and Dart code: verified APIs instead of guessed ones, one class per file, small widget files, plain developer naming, clean Bloc wiring, and tests for every feature.",
+      "category": "development",
+      "tags": [
+        "flutter",
+        "dart",
+        "bloc",
+        "code-quality"
+      ]
+    }
+  ]
+}
