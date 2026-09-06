@@ -69,6 +69,3 @@ isn't covered, open an issue with the before/after.
 MIT. See [LICENSE](LICENSE).
 
 ---
-
-Flutter and the related logo are trademarks of Google LLC. This project is not
-affiliated with or otherwise sponsored by Google LLC.
