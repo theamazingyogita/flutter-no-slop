@@ -1,6 +1,6 @@
 ---
 name: flutter-no-slop
-description: Enforces human-quality Flutter and Dart code — verified APIs instead of guessed ones, one class per file, plain developer naming, no redundant widget nesting, clean Bloc wiring, and tests for every feature. Use this skill whenever writing, refactoring, or reviewing any Flutter or Dart code, adding a screen or widget, creating a Bloc or Cubit, or when the user mentions code quality, cleanup, code review, or says generated code looks bloated, over-engineered, or over-abstracted. Apply it by default on Flutter work even when the user does not ask for it explicitly.
+description: Enforces human-quality Flutter and Dart code — matches the project's existing conventions, verifies APIs instead of guessing them, refuses to ship stubs or placeholder data, keeps widget files small, handles errors instead of swallowing them, guards BuildContext across async gaps, bans hardcoded colours and strings, and requires tests and a clean dart analyze before reporting done. Use this skill whenever writing, refactoring, or reviewing any Flutter or Dart code, adding a screen, widget, Bloc or Cubit, or when the user mentions code quality, cleanup, or says generated code looks bloated or over-engineered. Apply it by default on Flutter work even when the user does not ask for it explicitly.
 ---
 
 # Flutter: write it like a developer, not a generator
@@ -17,6 +17,24 @@ to open.
 
 Follow the rules below. Each one explains what it prevents, because knowing why
 a rule exists is what makes it survive contact with an unusual case.
+
+---
+
+## 0. The project you are in wins
+
+Read `pubspec.yaml`, the existing folder structure, and two or three nearby
+files before writing anything. Match what is already there: the state
+management library, the mocking library, the folder layout, the import style,
+the naming conventions.
+
+Where this document and the project disagree, the project wins — except on
+correctness. A codebase that uses Riverpod does not get Bloc because this skill
+mentions Bloc. A codebase that uses mockito does not get a second mocking
+library added to it.
+
+Consistency inside one codebase is worth more than any individual rule here.
+The rules below describe good defaults for new code and for projects with no
+established convention.
 
 ---
 
@@ -284,112 +302,149 @@ someone will read them from another file.
 
 ---
 
-## 9. Bloc: events in, state out
+## 9. Never ship a stub and call it done
 
-The point of Bloc is that every state change has a traceable cause. Code that
-calls methods on a Bloc from the UI throws that away.
+The most damaging thing a coding agent does is report a feature complete when
+it returns hardcoded data. The code compiles, the screen renders, and the bug
+is found in QA or production instead of in review.
 
-**Structure:**
+- Never return placeholder or invented data from a repository or data source to
+  make a screen render.
+- Never write `// TODO: implement` and describe the feature as finished.
+- Never write an empty method body to satisfy an interface without saying so.
 
-- The UI dispatches events: `context.read<LoginBloc>().add(LoginSubmitted())`.
-  Never call a public method on a Bloc from a widget.
-- Business logic lives in the Bloc or Cubit. Widgets do not compute, transform,
-  or decide — they render state and dispatch events.
-- Page provides, View consumes. The `Page` widget owns the `BlocProvider`; the
-  `View` widget below it uses `BlocBuilder` / `BlocListener`.
-- No Bloc depends on another Bloc. They communicate through a shared repository
-  or through the UI layer.
-
-**Events and states stay small.** An event is a fact that happened
-(`CartItemRemoved`), not a command with options. A state is what the screen
-needs to render, nothing more. If a state class has eight fields, the screen is
-probably doing two jobs.
-
-**Widget selection:**
-
-- `BlocBuilder` — rebuild UI on state change
-- `BlocListener` — side effects only: navigation, snackbars, dialogs
-- `BlocConsumer` — both
-- `BlocSelector` — rebuild on one field only
-- `context.read` inside callbacks; `context.watch` or `BlocBuilder` inside
-  `build`. Never `context.watch` in a callback.
-
-**Wiring that gets forgotten.** Check each of these — they fail silently or
-only at runtime:
-
-- `Bloc.observer` assigned in `main()` if the project has a `BlocObserver`
-- A `BlocProvider` actually mounted above every widget that reads that Bloc
-- `BlocProvider.value` used only for an existing instance, never where `create`
-  was meant — otherwise nothing closes the Bloc
-- Every field of a state included in `props` (Equatable) or in the freezed
-  definition — a missing field means `emit` fires and the UI never rebuilds
-- `emit` guarded by `isClosed` after any `await`
-- Error states present in the state hierarchy and handled in the UI, so a
-  failure does not render as a permanent spinner
+If something cannot be completed — an endpoint does not exist yet, a design is
+ambiguous, a credential is missing — stop and say exactly what is blocking.
+A clear "the orders endpoint is not in the API spec, so I stubbed the
+repository and marked it" is useful. A silent stub is not.
 
 ---
 
-## 10. A flow document per feature
+## 10. Stay inside the task
 
-When you build or substantially change a feature, write
-`docs/features/<feature>.md` alongside it. This is what lets the next person —
-or the next agent session — understand the feature without reading every file.
+Change what was asked and the files that change requires. Nothing else.
 
-Keep it short and factual:
+- Do not reformat, rename, or restructure files unrelated to the task.
+- Do not upgrade dependencies, change lint rules, or alter build configuration
+  unless that is the task.
+- Do not delete code you do not understand. If something looks wrong but is out
+  of scope, mention it and leave it.
 
-```markdown
-# Checkout
+A large diff hides the actual change. The developer has to review every line,
+and the real work gets lost in noise they did not ask for.
 
-## What it does
-One paragraph.
+---
 
-## Flow
-1. User taps Pay on CartPage
-2. CheckoutRequested event dispatched to CheckoutBloc
-3. Bloc calls OrderRepository.submit()
-4. Success -> CheckoutSuccess state -> navigate to ReceiptPage
-5. Failure -> CheckoutFailure state -> error banner, cart preserved
+## 11. Handle errors, do not swallow them
 
-## Files
-- lib/checkout/view/checkout_page.dart
-- lib/checkout/bloc/checkout_bloc.dart
-- lib/checkout/data/order_repository.dart
+Generated code catches exceptions and discards them, which turns a clear
+failure into a silent one.
 
-## States
-CheckoutInitial, CheckoutInProgress, CheckoutSuccess, CheckoutFailure
+**Never write:**
 
-## Edge cases
-- Network drop mid-submit: cart preserved, retry offered
-- Empty cart: Pay button disabled
+```dart
+try {
+  await repository.fetch();
+} catch (e) {
+  print(e);
+}
 ```
 
-Update the doc in the same change as the code. A stale flow doc is worse than
-none.
+That has three problems: `print` does not exist in a release build's logs, the
+caller has no idea anything failed, and the UI keeps spinning.
+
+**Instead:**
+
+- Catch specific exceptions where you can act on them, not bare `catch (e)`.
+- Surface failures as state the UI renders — an error state, not a swallowed
+  log line.
+- Use the project's logging setup. Never `print` in application code.
+- Never use `!` to force-unwrap a nullable just to silence the analyser. Handle
+  the null case or explain in a comment why it cannot happen.
+- Rethrow if you cannot handle it: `catch (e) { ... rethrow; }`.
 
 ---
 
-## 11. Test every feature, and test failure
+## 12. Guard BuildContext across async gaps
 
-Tests that only cover the happy path are the ones that pass while the app is
-broken.
+Using a `BuildContext` after an `await` crashes if the widget was disposed
+while the future was in flight. This is a real runtime failure, not a style
+preference, and `dart analyze` flags it as `use_build_context_synchronously`.
 
-For each feature, write:
+```dart
+Future<void> _submit() async {
+  await context.read<LoginBloc>().stream.first;
+  if (!mounted) return;
+  Navigator.of(context).pop();
+}
+```
 
-- **Bloc test** with `blocTest` from `package:bloc_test` — cover the success
-  path *and* the failure path. Never assert on streams manually.
-- **Widget test** for each visual branch: loading, loaded, empty, error. A
-  screen with four states needs four tests.
-- **Repository test** with the data source mocked.
-
-Every test must fail if the implementation is removed. `expect(true, isTrue)`
-and a test that asserts a widget exists without exercising anything are noise
-that inflates coverage and protects nothing.
-
-Match the project's existing mocking library rather than importing a second one.
+Capture what you need before the `await` where possible, and check `mounted`
+after it where not. Never silence this lint with an ignore comment.
 
 ---
 
-## 12. Verify before reporting done
+## 13. No hardcoded values in UI
+
+Hardcoded colours, sizes, and strings are why a design change becomes a
+find-and-replace across fifty files.
+
+- Colours come from `Theme.of(context).colorScheme`, never `Color(0xFF...)`
+  inline.
+- Text styles come from `Theme.of(context).textTheme`, never a bare `TextStyle`
+  with a hardcoded size.
+- Spacing uses the project's existing constants if it has them.
+- User-facing strings go through the project's localisation setup. Never a
+  hardcoded English string in a widget if the project has l10n configured.
+
+If the project has no theme or l10n setup, follow what it does today and say
+that adding one would help — do not introduce one uninvited.
+
+---
+
+## 14. State management
+
+Match whatever the project already uses. Read `pubspec.yaml` first.
+
+If the project uses **flutter_bloc**, read `references/bloc.md` before writing
+any Bloc, Cubit, event, state, or provider. It covers event-driven structure,
+widget selection, and the wiring that fails silently — missing providers,
+incomplete `props`, unguarded `emit` after `await`, and who owns closing a Bloc.
+
+If the project uses Riverpod, Provider, signals, or anything else, follow that
+library's conventions and the project's existing patterns. Do not migrate a
+project to a different state management library unless asked.
+
+Regardless of library, two rules hold: business logic never lives in a widget,
+and the UI describes what happened rather than calling logic directly.
+
+---
+
+## 15. A flow document per feature
+
+When you build or substantially change a feature, write or update
+`docs/features/<feature>.md` in the same change. It records what the feature
+does, the flow from user action to result, the files involved, the states, and
+the edge cases — so the next person does not have to read every file to
+understand it. See `references/flow-doc.md` for the template.
+
+A stale flow doc is worse than none, so update it with the code, not after.
+
+---
+
+## 16. Test every feature, including failure
+
+Read `references/testing.md` before writing tests.
+
+The short version: every feature gets tests covering the failure path, not just
+the happy path. Every visual branch — loading, loaded, empty, error — gets a
+widget test. Every test must fail if the implementation is removed. Match the
+project's existing test and mocking libraries rather than introducing a second
+one.
+
+---
+
+## 17. Verify before reporting done
 
 Do not tell the user the work is complete until this passes:
 
@@ -407,20 +462,22 @@ not analyse cleanly is the single fastest way to lose the developer's trust.
 
 Before finishing any Flutter change, confirm:
 
+- [ ] Matched the project's existing libraries, structure, and conventions
 - [ ] Every API used was verified in source, not recalled
+- [ ] No stubs, placeholder data, or unfinished work reported as done
+- [ ] Nothing changed outside the scope of the task
 - [ ] Searched for an existing widget before creating a new one
-- [ ] One class per file
-- [ ] No widget wrapping another for a property it already has
-- [ ] No widget file over 500 lines; anything past 200 checked for extraction
+- [ ] One class per file; no widget file over 500 lines
 - [ ] No visual block appearing twice — extracted once and reused
-- [ ] Extracted widgets are classes, not `_buildX()` methods
-- [ ] `StatelessWidget` unless a resource lifecycle genuinely requires state
-- [ ] `const` used everywhere it is possible
-- [ ] Every controller, subscription, and timer disposed; Blocs closed by whoever created them
-- [ ] No `Resolver` / `Manager` / `Orchestrator` names, no single-use abstractions
-- [ ] No narration comments, no agent-addressed comments, no commented-out code
-- [ ] UI dispatches events only; logic lives in the Bloc
-- [ ] Provider mounted, observer registered, `props` complete, `isClosed` guarded
+- [ ] No widget wrapping another for a property it already has
+- [ ] `StatelessWidget` and `const` wherever possible
+- [ ] Every controller, subscription, and timer disposed
+- [ ] No swallowed exceptions, no `print`, no unexplained `!`
+- [ ] `mounted` checked before using `BuildContext` after an `await`
+- [ ] No hardcoded colours, text styles, or user-facing strings
+- [ ] Plain names; no `Resolver` / `Manager` / single-use abstractions
+- [ ] Comments explain why, addressed to developers
+- [ ] Logic lives outside widgets
 - [ ] Flow doc written or updated
 - [ ] Tests cover success and failure for every state
 - [ ] `dart analyze` clean, `dart format` run, `flutter test` green

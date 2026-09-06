@@ -18,6 +18,63 @@ closed.
 None of that breaks the build immediately, which is why it survives review and
 surfaces later as crashes and rewrites.
 
+## What changes
+
+The same prompt — "build a profile header with an avatar and name" — with and
+without the skill.
+
+**Without:**
+
+```dart
+class ProfileHeaderWidgetBuilder extends StatefulWidget {
+  @override
+  Widget build(BuildContext context) {
+    // Build the profile header
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        child: Column(
+          children: [
+            Center(child: CircleAvatar(radius: 40)),
+            SizedBox(height: 8),
+            Text(user.name),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+Stateful with no state. `Padding` wrapping a `Container` that takes padding.
+`Center` doing what `crossAxisAlignment` does. `SizedBox` where `Column` has
+`spacing`. A name no developer would choose. A comment that says what the code
+already says.
+
+**With:**
+
+```dart
+class ProfileHeader extends StatelessWidget {
+  const ProfileHeader({required this.user, super.key});
+
+  final User user;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        spacing: 8,
+        children: [
+          const CircleAvatar(radius: 40),
+          Text(user.name),
+        ],
+      ),
+    );
+  }
+}
+```
+
 ## Install
 
 **Any agent:**
