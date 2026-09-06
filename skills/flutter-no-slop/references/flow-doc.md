@@ -4,8 +4,8 @@ Write `docs/features/<feature>.md` when you build or substantially change a
 feature, and update it in the same change as the code.
 
 When you build or substantially change a feature, write
-`docs/features/<feature>.md` alongside it. This is what lets the next person —
-or the next agent session — understand the feature without reading every file.
+`docs/features/<feature>.md` alongside it. This is what lets the next person , 
+or the next agent session, understand the feature without reading every file.
 
 Keep it short and factual:
 

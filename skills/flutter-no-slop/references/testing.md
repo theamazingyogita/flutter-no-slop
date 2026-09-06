@@ -5,7 +5,7 @@ broken.
 
 For each feature, write:
 
-- **Bloc test** with `blocTest` from `package:bloc_test` — cover the success
+- **Bloc test** with `blocTest` from `package:bloc_test`, cover the success
   path *and* the failure path. Never assert on streams manually.
 - **Widget test** for each visual branch: loading, loaded, empty, error. A
   screen with four states needs four tests.
