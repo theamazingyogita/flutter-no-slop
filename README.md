@@ -115,10 +115,7 @@ It doesn't try to replace domain-specific skills such as the [VGV AI Flutter Plu
 
 ## Contributing
 
-Found a generated-code pattern that isn't covered?
-
-Open an issue or pull request with the before and after.
+Found a generated-code pattern that isn't covered? Open an issue or pull request with the before and after :)
 
 ## Licence
-
-MIT. See [LICENSE](LICENSE).
+MIT. [LICENSE](LICENSE).
