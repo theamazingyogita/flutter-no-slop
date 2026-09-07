@@ -1,28 +1,44 @@
+<div align="center">
+
 # Flutter No Slop
 
-*Leave the Container alone.*
+Agent skills that stop AI from making your Flutter codebase worse.
+
+</div>
 
 ## Why this exists
-Using AI to write code is settled now. Whether we picked it or the industry picked it for us is a different argument 🥹, and either way, most of us gave something up. The joy of working a problem out. The sound of actually typing. 😭
-What companies want is the feature and a working UI, and those do show up faster now. Great. I guess that's a win.
-Then you open the code the worst part.
-It is that exact feeling of taking handover of a project some other developer built which is not always very pleasing. 
-You explore the code for some time and then you try not to get angry or laugh with tears of pain of the mess you got.
-When AI generates the code, the developer's role quietly shifts from creator to code reviewer and maintainer
 
-The annoying part is having to explain the same things every time. Use the
-architecture that is already here. Do not make a `StatefulWidget` for something
-with no state. Check whether that widget exists before writing another one. Do
-not stack three wrappers to move something eight pixels. Handle the error
-instead of hiding it. Write the test for when it breaks, not only for when it
-works.
+Using AI to write code is settled now. Whether we picked it or the industry
+picked it for us is a different argument 🥹, and either way, most of us gave
+something up. The joy of working a problem out. The sound of actually typing. 😭
+
+What companies want is the feature and a working UI, and those do show up faster
+now. Great. I guess that's a win.
+
+Then you open the code, which is the worst part. It is that exact feeling of
+taking handover of a project some other developer built, the one that is never
+very pleasing. You read through it for a while and then try not to either get
+angry or laugh, depending on the mess you have been handed.
+
+When AI writes the code, your job quietly changes from writing it to reviewing
+and maintaining it.
+
+And the annoying part is explaining the same things every time.
+
+> Use the architecture that is already here.
+> Do not make a `StatefulWidget` for something with no state.
+> Check whether that widget exists before writing another one.
+> Do not stack three wrappers to move something eight pixels.
+> Handle the error instead of hiding it.
+> Write the test for when it breaks, not only for when it works.
 
 The agent listens, usually. Then the context fills up, or you start a new
 session, or a teammate opens the project, or you switch agents. And you are
 explaining it all again.
 
-If you repeat an instruction every time an agent starts working, that
-instruction belongs in the project.
+> [!TIP]
+> If you repeat an instruction every time an agent starts working, that
+> instruction belongs in the project.
 
 ## What a skill is
 
@@ -54,9 +70,9 @@ fake data, an exception becomes a `print`, a `build` method drifts past four
 hundred lines, and the tests cover the path that was always going to work. It
 compiles, so the agent reports success.
 
-Eighteen rules against all of that.
+**Eighteen rules against all of that.**
 
-## Before
+## Before and after
 
 Ask for a profile header and you can get this:
 
@@ -84,7 +100,7 @@ class ProfileHeaderWidgetBuilder extends StatefulWidget {
 Nothing here is a disaster, which is the problem. It looks fine once. Two
 hundred files like it is a codebase nobody wants to open.
 
-## After
+With the rules applied:
 
 ```dart
 class ProfileHeader extends StatelessWidget {
@@ -147,9 +163,10 @@ claude plugin install flutter-no-slop@theamazingyogita
 | 17 | Test failure paths, not only the successful ones |
 | 18 | Run `dart analyze` before reporting the work complete |
 
-Rule 10 matters more than it looks. An agent that hands you fake data and calls
-the feature complete has not saved you an afternoon. It has moved the afternoon
-to next week, and added the job of working out what it actually did.
+> [!IMPORTANT]
+> Rule 10 matters more than it looks. An agent that hands you fake data and
+> calls the feature complete has not saved you an afternoon. It has moved the
+> afternoon to next week, and added the job of working out what it actually did.
 
 Full detail in [`SKILL.md`](skills/flutter-no-slop/SKILL.md). Stack-specific
 guidance sits in [`references/`](skills/flutter-no-slop/references) and loads
@@ -160,16 +177,19 @@ only when the task needs it.
 Rule 1 is first on purpose. A generic set of Flutter rules should not bulldoze
 the conventions of a codebase that already has its own. A Riverpod project does
 not get told to introduce Bloc. A project on mockito does not get a second
-mocking library because this file mentions one. Where your project and this
-skill disagree, your project wins.
+mocking library because this file mentions one.
 
-The point is to remove decisions, not add them.
+**Where your project and this skill disagree, your project wins.** The point is
+to remove decisions, not add them.
 
 ## Still evolving
 
-This is early. The rules came from watching AI write Flutter in real projects,
-not from an attempt to define the correct way to write Flutter, so they will
-change. Some will miss a pattern, some will fire too aggressively, and some will
+> [!NOTE]
+> This is early. The rules came from watching AI write Flutter in real projects,
+> not from an attempt to define the correct way to write Flutter, so they will
+> change.
+
+Some rules will miss a pattern, some will fire too aggressively, and some will
 turn out to be personal taste dressed up as a principle. Those should go.
 
 The aim is not two hundred rules and another instruction manual. It is a small
@@ -215,8 +235,3 @@ skill should get more useful, not longer.
 ## License
 
 MIT. See [LICENSE](LICENSE).
-
----
-
-Flutter and the related logo are trademarks of Google LLC. This project is not
-affiliated with or otherwise sponsored by Google LLC.
