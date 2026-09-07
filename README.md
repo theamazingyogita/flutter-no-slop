@@ -96,11 +96,11 @@ claude plugin install flutter-no-slop@theamazingyogita
 | 2  | Search for an existing widget before creating another one                       |
 | 3  | One class per file                                                              |
 | 4  | Don't wrap a widget just to provide a property it already has                   |
-| 5  | Keep widget files under 200 lines; extract repeated code                        |
-| 6  | Prefer `StatelessWidget`; clean up every owned controller and subscription      |
+| 5  | Keep widget files under 200 lines,extract repeated code                        |
+| 6  | Prefer `StatelessWidget`,clean up every owned controller and subscription      |
 | 7  | Use plain names; avoid `Resolver`, `Orchestrator`, `Manager`, and similar names |
 | 8  | Comments explain why something exists, not what the code already says           |
-| 9  | UI dispatches events; business logic stays in the Bloc                          |
+| 9  | UI dispatches events,business logic stays in the Bloc                          |
 | 10 | Keep a flow document for each feature                                           |
 | 11 | Test failure paths, not only the happy path                                     |
 | 12 | Run `dart analyze` before reporting the work as done                            |
