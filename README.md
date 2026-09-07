@@ -1,85 +1,64 @@
 # Flutter No Slop
 
-*Leave the `Container` alone.*
+*Leave the Container alone.*
 
 ## Why this exists
+Using AI to write code is settled now. Whether we picked it or the industry picked it for us is a different argument 🥹, and either way, most of us gave something up. The joy of working a problem out. The sound of actually typing. 😭
+What companies want is the feature and a working UI, and those do show up faster now. Great. I guess that's a win.
+Then you open the code the worst part.
+It is that exact feeling of taking handover of a project some other developer built which is not always very pleasing. 
+You explore the code for some time and then you try not to get angry or laugh with tears of pain of the mess you got.
+When AI generates the code, the developer's role quietly shifts from creator to code reviewer and maintainer
 
-AI coding assistants are useful. That part is settled.
+The annoying part is having to explain the same things every time. Use the
+architecture that is already here. Do not make a `StatefulWidget` for something
+with no state. Check whether that widget exists before writing another one. Do
+not stack three wrappers to move something eight pixels. Handle the error
+instead of hiding it. Write the test for when it breaks, not only for when it
+works.
 
-The annoying part is having to explain the same things to them over and over.
+The agent listens, usually. Then the context fills up, or you start a new
+session, or a teammate opens the project, or you switch agents. And you are
+explaining it all again.
 
-Use the project's existing architecture.
-Do not create a `StatefulWidget` for something that has no state.
-Check whether that widget already exists.
-Do not add three wrappers just to move something eight pixels.
-Handle the error instead of hiding it.
-Write the test for when it breaks, not just when everything works.
+If you repeat an instruction every time an agent starts working, that
+instruction belongs in the project.
 
-The agent follows the instructions. Usually.
+## What a skill is
 
-Then the context gets too large. You start a new session. Someone else opens the project. Or you switch agents.
+A skill is a markdown file of instructions that lives with your project
+configuration. When the agent works on Dart or Flutter code, it reads the file
+and follows what is in it.
 
-Now you are explaining everything again.
+There is no package to add, no runtime code, no build step, and nothing that
+ships with your app. It is a way to hand the agent your rules without pasting
+them into every conversation. Install it once and everyone working on the
+project gets the same rules.
 
-If you have to repeat an instruction every time an agent starts working, that instruction probably belongs in the project.
-
-That's what this is for.
-
-## What is a skill?
-
-A skill is a Markdown file containing instructions for the coding agent.
-
-The file lives alongside your project configuration. When the agent needs to work on Dart or Flutter code, it can read those instructions and follow them.
-
-There is no package to add.
-
-No runtime code.
-
-No build step.
-
-No dependency.
-
-Nothing gets shipped with your app.
-
-It is simply a way to give the agent the project's rules without having to paste them into every conversation.
-
-Install it once and the rules are available to everyone working with the project.
-
-Works with Claude Code, Cursor, Codex, Gemini CLI, Antigravity, and other agents that support the [Agent Skills](https://agentskills.io/) standard.
+Works with Claude Code, Cursor, Codex, Gemini CLI, Antigravity, and other agents
+that support the [Agent Skills](https://agentskills.io) standard.
 
 ## What it tries to stop
 
-AI-generated Flutter code has some predictable habits.
+Generated Flutter has predictable habits. It likes wrappers, abstractions, and
+inventing architecture. It writes a new widget without checking for the one that
+already exists. It turns an ordinary class into a `Manager`, a `Resolver`, or an
+`Orchestrator`.
 
-It likes wrappers.
+Widgets are not free, either. Every one is another node in the tree, another
+thing to lay out and paint each frame, another level of indentation, another
+bracket at the bottom of the file.
 
-It likes unnecessary abstractions.
+The worse habit is finishing things that are not finished. A repository returns
+fake data, an exception becomes a `print`, a `build` method drifts past four
+hundred lines, and the tests cover the path that was always going to work. It
+compiles, so the agent reports success.
 
-It likes inventing architecture.
-
-It likes creating a new widget before checking whether one already exists.
-
-It likes turning a simple class into a `Manager`, `Resolver`, `Orchestrator`, or whatever other impressive-sounding name happens to fit.
-
-And when you ask it to implement something, it can be very good at making something that *looks* finished without actually finishing it.
-
-A repository returns fake data.
-
-An exception becomes a `print`.
-
-A `build()` method quietly grows past 400 lines.
-
-A test checks the happy path while the actual failure case has never been exercised.
-
-The code compiles, so the agent reports success.
-
-That is the kind of "done" this project is trying to avoid.
-
-There are currently 18 rules.
+Eighteen rules against all of that.
 
 ## Before
 
-Ask an agent to build a profile header and you might get something like this:
+Ask for a profile header and you can get this:
 
 ```dart
 class ProfileHeaderWidgetBuilder extends StatefulWidget {
@@ -102,15 +81,10 @@ class ProfileHeaderWidgetBuilder extends StatefulWidget {
 }
 ```
 
-Nothing here is catastrophic.
-
-That's the problem.
-
-It is the kind of code that looks reasonable when generated once, then slowly makes an entire codebase harder to work with.
+Nothing here is a disaster, which is the problem. It looks fine once. Two
+hundred files like it is a codebase nobody wants to open.
 
 ## After
-
-With the rules applied:
 
 ```dart
 class ProfileHeader extends StatelessWidget {
@@ -134,21 +108,8 @@ class ProfileHeader extends StatelessWidget {
 }
 ```
 
-The important part is not what was added.
-
-It is what was removed.
-
-No unnecessary state.
-
-No unnecessary `Container`.
-
-No unnecessary `Center`.
-
-No unnecessary `SizedBox`.
-
-No unnecessarily complicated class name.
-
-That is the general idea behind Flutter No Slop.
+Nothing was added. The state, the `Container`, the `Center`, the `SizedBox` and
+half the class name were removed. That is the whole idea.
 
 ## Install
 
@@ -165,125 +126,97 @@ claude plugin install flutter-no-slop@theamazingyogita
 
 ## The rules
 
-| #  | Rule                                                                            |
-| -- | ------------------------------------------------------------------------------- |
-| 1  | The project's existing conventions always win                                   |
-| 2  | Verify APIs from source instead of guessing from memory                         |
-| 3  | Look for an existing widget before creating another one                         |
-| 4  | One class per file                                                              |
-| 5  | Do not add a wrapper just to set a property the widget already supports         |
-| 6  | Keep widget files under 200 lines and extract repeated code                     |
-| 7  | Prefer `StatelessWidget` and `const`; dispose every resource you create         |
-| 8  | Use plain names; avoid `Resolver`, `Orchestrator`, `Manager`, and similar noise |
-| 9  | Comments explain why; do not force every file into the same template            |
-| 10 | Never call a stub, fake implementation, or placeholder data "done"              |
-| 11 | Do the task that was requested; do not sneak in unrelated refactors             |
-| 12 | Handle errors explicitly; do not swallow exceptions or use `print`              |
-| 13 | Guard `BuildContext` across async gaps                                          |
-| 14 | Do not hardcode colours, text styles, or user-facing strings                    |
-| 15 | Keep business logic out of widgets                                              |
-| 16 | Keep a flow document for each feature                                           |
-| 17 | Test failure paths, not only successful ones                                    |
-| 18 | Run `dart analyze` before reporting the work as complete                        |
+| # | Rule |
+|---|---|
+| 1 | The project's existing conventions always win |
+| 2 | Verify APIs from source instead of guessing from memory |
+| 3 | Look for an existing widget before creating another one |
+| 4 | One class per file |
+| 5 | No wrapper for a property the widget already supports |
+| 6 | Keep widget files under 200 lines and extract repeated code |
+| 7 | Prefer `StatelessWidget` and `const`, dispose every resource you create |
+| 8 | Plain names, no `Resolver`, `Orchestrator`, `Manager` |
+| 9 | Comments explain why, and not every file needs the same shape |
+| 10 | Never call a stub or placeholder data done |
+| 11 | Do the task that was asked, no unrelated refactors |
+| 12 | Handle errors, do not swallow exceptions or reach for `print` |
+| 13 | Guard `BuildContext` across async gaps |
+| 14 | No hardcoded colours, text styles, or user-facing strings |
+| 15 | Keep business logic out of widgets |
+| 16 | Keep a flow document for each feature |
+| 17 | Test failure paths, not only the successful ones |
+| 18 | Run `dart analyze` before reporting the work complete |
 
-### Rule 10 matters more than it looks
+Rule 10 matters more than it looks. An agent that hands you fake data and calls
+the feature complete has not saved you an afternoon. It has moved the afternoon
+to next week, and added the job of working out what it actually did.
 
-An agent that gives you fake data, leaves half the implementation unfinished, and tells you the feature is complete has not saved you time.
-
-It has simply postponed the work until you discover it.
-
-And now you have to figure out what the agent actually did before you can continue.
+Full detail in [`SKILL.md`](skills/flutter-no-slop/SKILL.md). Stack-specific
+guidance sits in [`references/`](skills/flutter-no-slop/references) and loads
+only when the task needs it.
 
 ## It reads the project before changing it
 
-Rule 1 is deliberately first.
+Rule 1 is first on purpose. A generic set of Flutter rules should not bulldoze
+the conventions of a codebase that already has its own. A Riverpod project does
+not get told to introduce Bloc. A project on mockito does not get a second
+mocking library because this file mentions one. Where your project and this
+skill disagree, your project wins.
 
-A generic set of Flutter rules should not bulldoze the conventions of an existing codebase.
+The point is to remove decisions, not add them.
 
-If the project uses Riverpod, this does not tell the agent to introduce Bloc.
+## Still evolving
 
-If the project already uses Mockito, it does not add another mocking library because that happens to be mentioned in some example.
+This is early. The rules came from watching AI write Flutter in real projects,
+not from an attempt to define the correct way to write Flutter, so they will
+change. Some will miss a pattern, some will fire too aggressively, and some will
+turn out to be personal taste dressed up as a principle. Those should go.
 
-If the project has its own naming conventions, those conventions matter more than this file.
+The aim is not two hundred rules and another instruction manual. It is a small
+set that reliably stops bad generated code.
 
-The agent should look at the project first.
-
-This skill is there to reduce unnecessary decisions, not create more of them.
-
-## This is still evolving
-
-This is early.
-
-The rules came from seeing AI-generated Flutter code in actual projects, not from trying to define the one true way to write Flutter.
-
-That means some rules will change.
-
-A rule might miss a pattern.
-
-Another might be too aggressive.
-
-Something that seemed useful might turn out to be nothing more than personal preference.
-
-When that happens, the rule should change.
-
-The goal is not to accumulate 200 rules until the skill becomes another giant instruction manual. The goal is to keep a small set of rules that consistently prevents bad generated code.
-
-If you use it and the agent gets something wrong, open an issue.
-
-A before-and-after example is especially useful.
+If you use it and the agent gets something wrong, open an issue. A before and
+after is the most useful thing you can send.
 
 ## Numbers
 
-None yet.
+None yet. Benchmarks are coming, and they will be published whether or not the
+result is flattering. A benchmark you only publish when it looks good is
+marketing.
 
-Benchmarks are coming.
+## Not a Flutter tutorial
 
-And they will be published whether they make this project look good or not.
+Other projects teach agents how to build things properly, and the
+[VGV AI Flutter Plugin](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin)
+is a good one. Use those. This has a different job: keeping the agent from
+making the codebase worse while it works. Less abstraction, less duplication,
+less boilerplate, less unfinished work described as finished.
 
-A benchmark that only gets published when the result is flattering is marketing, not a benchmark.
+## Credit
 
-## This is not a Flutter tutorial
+The idea came from [ponytail](https://github.com/DietrichGebert/ponytail), which
+does this for code in general and is worth installing on its own. Ponytail
+argues for the laziest solution that works. Flutter No Slop takes the same
+instinct and points it at the things Flutter gets wrong specifically: the widget
+tree, disposal, `BuildContext` across async gaps, and state management.
 
-There are already projects that teach agents how to work with Flutter and particular stacks.
-
-For example, the [VGV AI Flutter Plugin](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin) provides more domain-specific guidance.
-
-Use those.
-
-Flutter No Slop has a different job.
-
-It is not trying to teach an agent everything about Flutter.
-
-It is trying to stop the agent from making the codebase worse while it is doing its job.
-
-Less abstraction.
-
-Less duplication.
-
-Less boilerplate.
-
-Less pretending unfinished work is finished.
+They work together. Ponytail asks whether the code needs to exist. This one
+deals with what is left.
 
 ## Contributing
 
-Found a generated-code pattern that keeps showing up and is not covered?
+Found a generated pattern that keeps appearing and is not covered? Open an issue
+with the generated code, what is wrong with it, and what it should have been.
+One rule per pull request.
 
-Open an issue with:
-
-1. The generated code
-2. What is wrong with it
-3. What the code should have looked like
-
-If it belongs in the skill, add one rule.
-
-Keep `SKILL.md` under 500 lines. Detailed, stack-specific guidance belongs in `references/`.
-
-The skill should become more useful, not simply become longer.
+Keep `SKILL.md` under 500 lines. Anything longer belongs in `references/`. The
+skill should get more useful, not longer.
 
 ## License
 
-MIT. See `LICENSE`.
+MIT. See [LICENSE](LICENSE).
 
 ---
 
-Flutter and the related logo are trademarks of Google LLC. This project is not affiliated with or otherwise sponsored by Google LLC.
+Flutter and the related logo are trademarks of Google LLC. This project is not
+affiliated with or otherwise sponsored by Google LLC.
