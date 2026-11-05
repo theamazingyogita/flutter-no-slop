@@ -70,7 +70,7 @@ fake data, an exception becomes a `print`, a `build` method drifts past four
 hundred lines, and the tests cover the path that was always going to work. It
 compiles, so the agent reports success.
 
-**Eighteen rules against all of that.**
+**Twenty-two rules against all of that.**
 
 ## Before and after
 
@@ -159,9 +159,13 @@ claude plugin install flutter-no-slop@theamazingyogita
 | 13 | Guard `BuildContext` across async gaps |
 | 14 | No hardcoded colours, text styles, or user-facing strings |
 | 15 | Keep business logic out of widgets |
-| 16 | Keep a flow document for each feature |
+| 16 | Keep feature docs where the project keeps them |
 | 17 | Test failure paths, not only the successful ones |
-| 18 | Run `dart analyze` before reporting the work complete |
+| 18 | UI is not done because it compiles, check design, dark mode, and every state |
+| 19 | Fix the whole bug in the shared widget, not one screen |
+| 20 | Trace the data to the real cause before changing anything |
+| 21 | Clean up temporary code and stray files before finishing |
+| 22 | Run `dart analyze` before reporting the work complete |
 
 > [!IMPORTANT]
 > Rule 10 matters more than it looks. An agent that hands you fake data and

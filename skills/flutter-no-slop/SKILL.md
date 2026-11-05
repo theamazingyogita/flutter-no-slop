@@ -152,16 +152,17 @@ rebuilds all of it.
 **File size:**
 
 - Under 200 lines is healthy for a widget file.
-- 200, 500 lines means look for something to extract, and usually there is
+- 200 to 500 lines means look for something to extract, and usually there is
   something obvious.
-- Over 500 lines is a defect. Split it before doing anything else in that file.
+- Over 500 lines is too big. Do not grow it, put new code in a new widget. Mention
+  the split, but do not start it unless it is the task (section 10).
 
 **Extract a widget when any of these is true:**
 
 - The same visual block appears twice anywhere in the project. Twice is the
   threshold, not three times, not "when it gets messy."
-- A section of the tree has a name you would say out loud: the order summary,
-  the avatar row, the empty state. If it has a name, it is a widget.
+- A section is big enough to make `build` hard to read, and has a name you would
+  say out loud: the order summary, the empty state.
 - Nesting in `build` passes about four levels.
 - A part of the screen rebuilds on state the rest does not care about. Extract
   it so the rebuild stays local.
@@ -172,12 +173,14 @@ rebuilds all of it.
 - Used by two or more features → the shared UI directory the project already
   uses. Never copy it into a second feature.
 
-**Extract to a class, not a method.** A `Widget _buildHeader()` method looks
-tidy but is not a widget. It has no element in the tree, cannot be `const`,
-cannot have its own state, and rebuilds with its parent every time. A private
-`class _Header extends StatelessWidget` in the same file costs three extra
-lines and is strictly better. Reach for a method only for something trivial and
-used once.
+**Leave simple sections inline.** A few widgets used once stay in `build`. They
+do not need a `_buildHeader()` method or a `_Header` class, and a file full of
+tiny private pieces is harder to read than the tree it replaced.
+
+**When you do extract, use a class, not a method.** A `Widget _buildHeader()`
+method has no element in the tree, cannot be `const`, cannot have its own state,
+and rebuilds with its parent every time. A private
+`class _Header extends StatelessWidget` costs three extra lines and avoids that.
 
 This pulls against section 2 on purpose. Section 2 stops you inventing a fourth
 button class; this stops you inlining the same block twice out of reluctance to
@@ -190,13 +193,11 @@ exists or extract once.** Never duplicate.
 
 **Default to `StatelessWidget`.** Reach for `StatefulWidget` only when the
 widget genuinely owns a lifecycle: a controller, an animation, a focus node, a
-subscription. If the thing you want to hold is feature state, the user, the
-cart, the loading flag. It belongs in a Bloc or Cubit, not in `setState`.
+subscription. Feature state (the user, the cart, the loading flag) belongs in
+the project's state management, not in `setState`.
 
 A screen that keeps its data in `setState` looks simpler for one afternoon and
-then cannot be tested, restored, or shared. If you find yourself reaching for
-`StatefulWidget` to store data rather than to manage a resource, the state is
-in the wrong place.
+then cannot be tested, restored, or shared.
 
 **Use `const` constructors everywhere they are possible.** A `const` widget is
 not rebuilt when its parent rebuilds. This is the cheapest performance win in
@@ -219,30 +220,8 @@ This covers `TextEditingController`, `ScrollController`, `AnimationController`,
 `PageController`, `TabController`, `FocusNode`, `StreamSubscription`, and
 `Timer`. Call `super.dispose()` last.
 
-**Blocs are different, and this is where mistakes happen.** A Bloc has
-`close()`, not `dispose()`, and you usually should not call it yourself:
-
-- Created with `BlocProvider(create: (_) => MyBloc())`, the provider closes it
-  automatically when it leaves the tree. Do not close it manually.
-- Passed with `BlocProvider.value(value: existingBloc)`, the provider does
-  **not** close it. Whoever created it owns closing it. This is the common
-  source of both "used after close" errors and leaked Blocs.
-- Registered globally at app root, or in a service locator for the whole app
-  lifetime. It lives as long as the app. Do not close it.
-
-The one time you write cleanup inside a Bloc is when the Bloc itself started a
-subscription:
-
-```dart
-@override
-Future<void> close() {
-  _subscription.cancel();
-  return super.close();
-}
-```
-
-Everything a Bloc opens, the Bloc closes. Everything a widget opens, the widget
-closes. Do not reach across that line.
+**Blocs are different.** A Bloc has `close()`, not `dispose()`, and you usually
+should not call it yourself. See `references/bloc.md`.
 
 ---
 
@@ -268,6 +247,11 @@ single subclass).
 Do not add an abstraction until there is a second caller. One interface with one
 implementation, or a factory that constructs exactly one type, is indirection
 with no benefit. It makes the reader chase a hop for nothing.
+
+Avoid vague generated prefixes and words like `resolved*`, `candidate*`, and
+`lookupKey`. Name the value itself, or match the file (`getCityState` if the file
+uses `get`). Do not rename short existing names to sound more descriptive. If a
+name is really misleading, say so and leave the rename to the developer.
 
 Methods are verbs (`fetchOrders`, `submitForm`). Booleans read as assertions
 (`isLoading`, `hasError`). Follow effective Dart: `UpperCamelCase` for types,
@@ -369,7 +353,9 @@ Future<void> _submit() async {
 ```
 
 Capture what you need before the `await` where possible, and check `mounted`
-after it where not. Never silence this lint with an ignore comment.
+after it where not. `mounted` only exists on `State`. In a `StatelessWidget`
+callback, or a function that takes a context, check `context.mounted`. Never
+silence this lint with an ignore comment.
 
 ---
 
@@ -383,6 +369,8 @@ find-and-replace across fifty files.
 - Text styles come from `Theme.of(context).textTheme`, never a bare `TextStyle`
   with a hardcoded size.
 - Spacing uses the project's existing constants if it has them.
+- A layout value used once stays inline, `fontSize: 16` or
+  `EdgeInsets.only(top: 3.5)`. No `static const _fontSize` for a single use.
 - User-facing strings go through the project's localisation setup. Never a
   hardcoded English string in a widget if the project has l10n configured.
 
@@ -409,13 +397,11 @@ and the UI describes what happened rather than calling logic directly.
 
 ---
 
-## 15. A flow document per feature
+## 15. Keep feature docs where the project keeps them
 
-When you build or substantially change a feature, write or update
-`docs/features/<feature>.md` in the same change. It records what the feature
-does, the flow from user action to result, the files involved, the states, and
-the edge cases, so the next person does not have to read every file to
-understand it. See `references/flow-doc.md` for the template.
+If the project already keeps feature docs, or the developer asks for one, write
+or update the doc in the same change. Otherwise do not add one, a markdown file
+nobody asked for is clutter. See `references/flow-doc.md` for the template.
 
 A stale flow doc is worse than none, so update it with the code, not after.
 
@@ -425,22 +411,58 @@ A stale flow doc is worse than none, so update it with the code, not after.
 
 Read `references/testing.md` before writing tests.
 
-The short version: every feature gets tests covering the failure path, not just
-the happy path. Every visual branch, loading, loaded, empty, error, gets a
+Every feature gets tests for the failure path, and every visual branch gets a
 widget test. Every test must fail if the implementation is removed. Match the
-project's existing test and mocking libraries rather than introducing a second
-one.
+project's existing test and mocking libraries.
 
 ---
 
-## 17. Verify before reporting done
+## 17. UI is not done because it compiles
+
+`dart analyze` cannot see a wrong colour or a half-empty shimmer. Read
+`references/ui-states.md` before building or changing a screen.
+
+If a design file or screenshot exists, read it before writing code. Never say a
+screen matches the design unless you saw it running. Say what you did not check.
+
+---
+
+## 18. Fix the whole bug, not one screen
+
+Before fixing a UI bug, search for every place that uses the same pattern. Fix it
+in the shared widget if there is one, so the developer does not report it again
+on the next screen. If the fix spreads far, list the places and ask first. Make
+the changes as normal edits, not one shell script rewriting many files.
+
+---
+
+## 19. Trace the data before changing anything
+
+When a screen shows the wrong thing, read `references/async-data.md` and follow
+the data: API response, model, state, widget. Find where it goes wrong. Do not
+change the backend or add an API call when the app already has the data.
+
+---
+
+## 20. Clean up before you finish
+
+Remove temporary test code, forced states, dummy data, notes, and assets that are
+no longer used. Before a commit, read `git status` and `git diff --stat`. Every
+file in the list must belong to the task. Restore anything deleted or rolled back
+by accident, this happens most after a merge or a revert.
+
+---
+
+## 21. Verify before reporting done
 
 Do not tell the user the work is complete until this passes:
 
-1. `dart analyze`, zero errors and zero warnings. Fix them; do not silence
-   them with ignore comments unless the user asks.
-2. `dart format .`
-3. `flutter test`, all tests pass, including the ones you just wrote.
+1. `dart analyze`, no new errors or warnings. Fix them, do not silence them with
+   ignore comments unless the user asks. Mention older ones, leave them alone.
+2. `dart format` on the files you changed only. `dart format .` can reformat the
+   whole repo and bury the real change.
+3. `flutter test`, all tests pass, including the ones you just wrote. Name any
+   test that was already failing.
 
 If any step fails, fix it and run again. Reporting completion on code that does
 not analyse cleanly is the single fastest way to lose the developer's trust.
@@ -455,19 +477,19 @@ Before finishing any Flutter change, confirm:
 - [ ] Every API used was verified in source, not recalled
 - [ ] No stubs, placeholder data, or unfinished work reported as done
 - [ ] Nothing changed outside the scope of the task
-- [ ] Searched for an existing widget before creating a new one
-- [ ] One class per file; no widget file over 500 lines
-- [ ] No visual block appearing twice, extracted once and reused
+- [ ] Searched for an existing widget first, one class per file, no file past 500
+- [ ] No visual block appearing twice, simple sections left inline
 - [ ] No widget wrapping another for a property it already has
-- [ ] `StatelessWidget` and `const` wherever possible
-- [ ] Every controller, subscription, and timer disposed
+- [ ] `StatelessWidget` and `const` wherever possible, every resource disposed
 - [ ] No swallowed exceptions, no `print`, no unexplained `!`
 - [ ] `mounted` checked before using `BuildContext` after an `await`
 - [ ] No hardcoded colours, text styles, or user-facing strings
 - [ ] Plain names; no `Resolver` / `Manager` / single-use abstractions
-- [ ] Comments explain why; no over-documentation, no uniform file shapes
-- [ ] No long dashes or semicolons in comments, commits, or markdown
+- [ ] Comments explain why, no uniform file shapes, no long dashes or semicolons
 - [ ] Logic lives outside widgets
-- [ ] Flow doc written or updated
+- [ ] Feature doc updated, if the project keeps them
 - [ ] Tests cover success and failure for every state
-- [ ] `dart analyze` clean, `dart format` run, `flutter test` green
+- [ ] Light and dark mode, loading, empty, and error checked or reported unchecked
+- [ ] Same bug searched for elsewhere, data traced to the real cause
+- [ ] Temporary code, dummy data, and stray files removed, diff holds only the task
+- [ ] No new analyzer issues, changed files formatted, `flutter test` green
