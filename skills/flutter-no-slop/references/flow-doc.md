@@ -1,11 +1,9 @@
 # Feature flow document
 
-Write `docs/features/<feature>.md` when you build or substantially change a
-feature, and update it in the same change as the code.
-
-When you build or substantially change a feature, write
-`docs/features/<feature>.md` alongside it. This is what lets the next person , 
-or the next agent session, understand the feature without reading every file.
+Use this when the project already keeps feature docs, or the developer asks for
+one. Follow the project's location if it has one, otherwise use
+`docs/features/<feature>.md`. A good doc lets the next person, or the next agent
+session, understand the feature without reading every file.
 
 Keep it short and factual:
 

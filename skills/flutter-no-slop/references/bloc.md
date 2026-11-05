@@ -41,3 +41,27 @@ only at runtime:
 - Error states present in the state hierarchy and handled in the UI, so a
   failure does not render as a permanent spinner
 
+**Who closes a Bloc.** This is where mistakes happen:
+
+- Created with `BlocProvider(create: (_) => MyBloc())`, the provider closes it
+  automatically when it leaves the tree. Do not close it manually.
+- Passed with `BlocProvider.value(value: existingBloc)`, the provider does
+  **not** close it. Whoever created it owns closing it. This is the common
+  source of both "used after close" errors and leaked Blocs.
+- Registered globally at app root, or in a service locator for the whole app
+  lifetime. It lives as long as the app. Do not close it.
+
+The one time you write cleanup inside a Bloc is when the Bloc itself started a
+subscription:
+
+```dart
+@override
+Future<void> close() {
+  _subscription.cancel();
+  return super.close();
+}
+```
+
+Everything a Bloc opens, the Bloc closes. Everything a widget opens, the widget
+closes. Do not reach across that line.
+
